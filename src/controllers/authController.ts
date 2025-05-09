@@ -60,7 +60,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     // Buscar usuario
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email, isActive: true }).select('+password');
 
     // Verificar usuario y contraseña
     if (user && (await user.matchPassword(password))) {
@@ -107,6 +107,43 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
   } catch (error) {
     res.status(500).json({
       message: 'Error al obtener perfil',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+// @desc    Desactivar un usuario (soft delete)
+// @route   DELETE /api/auth/:id
+// @access  Private
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'No autorizado' });
+      return;
+    }
+
+    const userId = req.params.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Verificar que el usuario sea el mismo que está autenticado o que sea un administrador
+    if (userId !== req.user._id.toString() && req.user.role !== 'admin') {
+      res.status(401).json({ message: 'No autorizado para desactivar este usuario' });
+      return;
+    }
+
+    // Realizar soft delete
+    user.isActive = false;
+    await user.save();
+
+    res.json({ message: 'Usuario desactivado correctamente' });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error al desactivar usuario',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

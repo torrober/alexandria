@@ -7,6 +7,7 @@ Esta es una API RESTful para un sistema de gestión de biblioteca, construida co
 - Autenticación y autorización basada en JWT
 - CRUD completo para libros
 - Roles de usuario (usuario normal y administrador)
+- Soft delete para usuarios y libros
 - Documentación de API
 - Construida con TypeScript para un mejor desarrollo y mantenimiento
 
@@ -108,9 +109,15 @@ Puedes probar los endpoints de la API utilizando herramientas como Postman, cURL
      -H "Authorization: Bearer TU_TOKEN_JWT"
    ```
 
+5. **Desactivar usuario** (soft delete - solo el propio usuario o un administrador puede hacerlo):
+   ```bash
+   curl -X DELETE http://localhost:8000/api/auth/ID_USUARIO \
+     -H "Authorization: Bearer TU_TOKEN_JWT"
+   ```
+
 #### Libros
 
-1. **Obtener todos los libros**:
+1. **Obtener todos los libros** (solo se muestran libros activos):
    ```bash
    curl -X GET http://localhost:8000/api/books
    ```
@@ -130,7 +137,7 @@ Puedes probar los endpoints de la API utilizando herramientas como Postman, cURL
      }'
    ```
 
-3. **Obtener un libro por ID**:
+3. **Obtener un libro por ID** (solo funciona para libros activos):
    ```bash
    curl -X GET http://localhost:8000/api/books/ID_DEL_LIBRO
    ```
@@ -145,7 +152,7 @@ Puedes probar los endpoints de la API utilizando herramientas como Postman, cURL
      }'
    ```
 
-5. **Eliminar un libro** (requiere token de administrador):
+5. **Desactivar un libro** (soft delete - requiere token de administrador):
    ```bash
    curl -X DELETE http://localhost:8000/api/books/ID_DEL_LIBRO \
      -H "Authorization: Bearer TOKEN_ADMIN"
@@ -153,7 +160,7 @@ Puedes probar los endpoints de la API utilizando herramientas como Postman, cURL
 
 #### Préstamos
 
-1. **Crear un préstamo** (requiere autenticación):
+1. **Crear un préstamo** (requiere autenticación, solo usuarios activos pueden pedir libros activos):
    ```bash
    curl -X POST http://localhost:8000/api/loans \
      -H "Content-Type: application/json" \
@@ -163,13 +170,13 @@ Puedes probar los endpoints de la API utilizando herramientas como Postman, cURL
      }'
    ```
 
-2. **Ver préstamos propios** (requiere autenticación):
+2. **Ver préstamos propios** (requiere autenticación, solo muestra préstamos de libros activos):
    ```bash
    curl -X GET http://localhost:8000/api/loans/myloans \
      -H "Authorization: Bearer TU_TOKEN_JWT"
    ```
 
-3. **Ver todos los préstamos** (requiere token de administrador):
+3. **Ver todos los préstamos** (requiere token de administrador, solo muestra préstamos de usuarios y libros activos):
    ```bash
    curl -X GET http://localhost:8000/api/loans \
      -H "Authorization: Bearer TOKEN_ADMIN"
@@ -213,6 +220,14 @@ npm run data:destroy
   - Email: john@example.com
   - Password: 123456
 
+- **Usuario normal 2:**
+  - Email: jane@example.com
+  - Password: 123456
+
+- **Usuario inactivo (desactivado):**
+  - Email: inactive@example.com
+  - Password: 123456
+
 ## Estructura del proyecto
 
 ```
@@ -241,21 +256,39 @@ alexandria/
 - `POST /api/auth/register` - Registrar un nuevo usuario (rol opcional: 'user' o 'admin')
 - `POST /api/auth/login` - Iniciar sesión
 - `GET /api/auth/profile` - Obtener perfil de usuario (requiere autenticación)
+- `DELETE /api/auth/:id` - Desactivar un usuario (requiere ser el mismo usuario o un administrador)
 
 ### Libros
 
-- `GET /api/books` - Obtener todos los libros
-- `GET /api/books/:id` - Obtener un libro por ID
+- `GET /api/books` - Obtener todos los libros activos
+- `GET /api/books/:id` - Obtener un libro activo por ID
 - `POST /api/books` - Crear un nuevo libro (requiere rol de administrador)
-- `PUT /api/books/:id` - Actualizar un libro (requiere rol de administrador)
-- `DELETE /api/books/:id` - Eliminar un libro (requiere rol de administrador)
+- `PUT /api/books/:id` - Actualizar un libro activo (requiere rol de administrador)
+- `DELETE /api/books/:id` - Desactivar un libro (requiere rol de administrador)
 
 ### Préstamos
 
-- `GET /api/loans` - Obtener todos los préstamos (requiere rol de administrador)
+- `GET /api/loans` - Obtener todos los préstamos de usuarios y libros activos (requiere rol de administrador)
 - `GET /api/loans/myloans` - Obtener préstamos del usuario actual (requiere autenticación)
 - `POST /api/loans` - Crear un nuevo préstamo (requiere autenticación)
 - `PUT /api/loans/:id/return` - Devolver un libro prestado (requiere autenticación)
+
+## Soft Delete
+
+Esta API implementa "soft delete" para usuarios y libros, lo que significa:
+
+1. **Usuarios desactivados**:
+   - No pueden iniciar sesión
+   - Sus tokens de autenticación dejan de funcionar
+   - No aparecen en las listas de usuarios
+   - Solo pueden ser desactivados por ellos mismos o por un administrador
+
+2. **Libros desactivados**:
+   - No aparecen en las búsquedas de libros
+   - No pueden ser prestados
+   - Pueden ser devueltos si ya estaban en préstamo
+
+Esta estrategia permite mantener la integridad de los datos históricos mientras se oculta información que ya no debe ser accesible.
 
 ## Problemas conocidos y soluciones
 

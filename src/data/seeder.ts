@@ -19,18 +19,28 @@ const users = [
     email: 'admin@example.com',
     password: bcrypt.hashSync('123456', 10),
     role: 'admin',
+    isActive: true,
   },
   {
     name: 'John Doe',
     email: 'john@example.com',
     password: bcrypt.hashSync('123456', 10),
     role: 'user',
+    isActive: true,
   },
   {
     name: 'Jane Doe',
     email: 'jane@example.com',
     password: bcrypt.hashSync('123456', 10),
     role: 'user',
+    isActive: true,
+  },
+  {
+    name: 'Inactive User',
+    email: 'inactive@example.com',
+    password: bcrypt.hashSync('123456', 10),
+    role: 'user',
+    isActive: false,
   },
 ];
 
@@ -43,6 +53,7 @@ const books = [
     publishedYear: 1605,
     genre: 'Novela',
     quantity: 5,
+    isActive: true,
   },
   {
     title: 'Cien años de soledad',
@@ -51,6 +62,7 @@ const books = [
     publishedYear: 1967,
     genre: 'Realismo mágico',
     quantity: 3,
+    isActive: true,
   },
   {
     title: 'Harry Potter y la piedra filosofal',
@@ -59,6 +71,7 @@ const books = [
     publishedYear: 1997,
     genre: 'Fantasía',
     quantity: 10,
+    isActive: true,
   },
   {
     title: '1984',
@@ -67,6 +80,7 @@ const books = [
     publishedYear: 1949,
     genre: 'Distopía',
     quantity: 7,
+    isActive: true,
   },
   {
     title: 'El principito',
@@ -75,6 +89,16 @@ const books = [
     publishedYear: 1943,
     genre: 'Fábula',
     quantity: 4,
+    isActive: true,
+  },
+  {
+    title: 'Libro descatalogado',
+    author: 'Autor Ejemplo',
+    isbn: '9788412345678',
+    publishedYear: 2010,
+    genre: 'Ejemplo',
+    quantity: 0,
+    isActive: false,
   },
 ];
 
@@ -94,6 +118,7 @@ const importData = async (): Promise<void> => {
     const createdBooks = await Book.insertMany(books);
     const firstBook = createdBooks[0]._id;
     const secondBook = createdBooks[1]._id;
+    const inactiveBook = createdBooks[5]._id;
 
     // Crear algunos préstamos de ejemplo
     const loans = [
@@ -109,6 +134,12 @@ const importData = async (): Promise<void> => {
         borrowDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 días atrás
         returnDate: new Date(),
         isReturned: true,
+      },
+      {
+        user: createdUsers[1]._id,
+        book: inactiveBook,
+        borrowDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 días atrás
+        isReturned: false,
       },
     ];
 

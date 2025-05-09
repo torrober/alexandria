@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Loan, { ILoan } from '../models/Loan';
 import Book from '../models/Book';
+import User from '../models/User';
 
 // @desc    Obtener todos los préstamos
 // @route   GET /api/loans
@@ -8,10 +9,21 @@ import Book from '../models/Book';
 export const getLoans = async (req: Request, res: Response): Promise<void> => {
   try {
     const loans = await Loan.find({})
-      .populate('user', 'name email')
-      .populate('book', 'title author');
+      .populate({
+        path: 'user',
+        match: { isActive: true },
+        select: 'name email'
+      })
+      .populate({
+        path: 'book',
+        match: { isActive: true },
+        select: 'title author'
+      });
     
-    res.json(loans);
+    // Filtrar préstamos donde el libro o usuario haya sido desactivado
+    const filteredLoans = loans.filter(loan => loan.book && loan.user);
+    
+    res.json(filteredLoans);
   } catch (error) {
     res.status(500).json({
       message: 'Error al obtener préstamos',
@@ -31,9 +43,16 @@ export const getMyLoans = async (req: Request, res: Response): Promise<void> => 
     }
 
     const loans = await Loan.find({ user: req.user._id })
-      .populate('book', 'title author');
+      .populate({
+        path: 'book',
+        match: { isActive: true },
+        select: 'title author'
+      });
     
-    res.json(loans);
+    // Filtrar préstamos donde el libro haya sido desactivado
+    const filteredLoans = loans.filter(loan => loan.book);
+    
+    res.json(filteredLoans);
   } catch (error) {
     res.status(500).json({
       message: 'Error al obtener préstamos',
@@ -54,16 +73,24 @@ export const createLoan = async (req: Request, res: Response): Promise<void> => 
 
     const { bookId } = req.body;
 
-    // Verificar si el libro existe y está disponible
-    const book = await Book.findById(bookId);
+    // Verificar si el libro existe, está activo y disponible
+    const book = await Book.findOne({ _id: bookId, isActive: true });
 
     if (!book) {
-      res.status(404).json({ message: 'Libro no encontrado' });
+      res.status(404).json({ message: 'Libro no encontrado o no disponible' });
       return;
     }
 
     if (book.quantity <= 0) {
       res.status(400).json({ message: 'El libro no está disponible para préstamo' });
+      return;
+    }
+
+    // Verificar si el usuario actual está activo
+    const user = await User.findOne({ _id: req.user._id, isActive: true });
+    
+    if (!user) {
+      res.status(401).json({ message: 'Usuario desactivado, no puede realizar préstamos' });
       return;
     }
 
@@ -131,17 +158,30 @@ export const returnLoan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    // Verificar que el libro siga activo
+    const book = await Book.findOne({ _id: loan.book, isActive: true });
+    
+    if (!book) {
+      // Permitir devolver el libro incluso si ha sido desactivado
+      loan.isReturned = true;
+      loan.returnDate = new Date();
+      await loan.save();
+      
+      res.json({ 
+        loan, 
+        message: 'Préstamo devuelto. El libro ha sido desactivado del catálogo.' 
+      });
+      return;
+    }
+
     // Marcar como devuelto
     loan.isReturned = true;
     loan.returnDate = new Date();
     await loan.save();
 
     // Aumentar la cantidad disponible del libro
-    const book = await Book.findById(loan.book);
-    if (book) {
-      book.quantity += 1;
-      await book.save();
-    }
+    book.quantity += 1;
+    await book.save();
 
     res.json(loan);
   } catch (error) {

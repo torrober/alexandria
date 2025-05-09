@@ -7,6 +7,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   matchPassword(enteredPassword: string): Promise<boolean>;
@@ -34,6 +35,10 @@ const userSchema: Schema = new Schema(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {

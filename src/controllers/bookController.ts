@@ -6,7 +6,7 @@ import Book, { IBook } from '../models/Book';
 // @access  Public
 export const getBooks = async (req: Request, res: Response): Promise<void> => {
   try {
-    const books = await Book.find({});
+    const books = await Book.find({ isActive: true });
     res.json(books);
   } catch (error) {
     res.status(500).json({
@@ -21,7 +21,7 @@ export const getBooks = async (req: Request, res: Response): Promise<void> => {
 // @access  Public
 export const getBookById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findOne({ _id: req.params.id, isActive: true });
     
     if (book) {
       res.json(book);
@@ -81,7 +81,7 @@ export const updateBook = async (req: Request, res: Response): Promise<void> => 
   try {
     const { title, author, isbn, publishedYear, genre, quantity } = req.body;
 
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findOne({ _id: req.params.id, isActive: true });
 
     if (book) {
       book.title = title || book.title;
@@ -104,22 +104,24 @@ export const updateBook = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// @desc    Eliminar un libro
+// @desc    Desactivar un libro (soft delete)
 // @route   DELETE /api/books/:id
 // @access  Private/Admin
 export const deleteBook = async (req: Request, res: Response): Promise<void> => {
   try {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findOne({ _id: req.params.id, isActive: true });
 
     if (book) {
-      await book.deleteOne();
-      res.json({ message: 'Libro eliminado' });
+      // Realizar soft delete
+      book.isActive = false;
+      await book.save();
+      res.json({ message: 'Libro desactivado' });
     } else {
       res.status(404).json({ message: 'Libro no encontrado' });
     }
   } catch (error) {
     res.status(500).json({
-      message: 'Error al eliminar libro',
+      message: 'Error al desactivar libro',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

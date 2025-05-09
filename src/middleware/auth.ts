@@ -28,14 +28,16 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
       // Verificar token
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
 
-      // Obtener usuario del token
-      const user = await User.findById(decoded.id).select('-password');
+      // Obtener usuario del token y verificar que esté activo
+      const user = await User.findOne({ _id: decoded.id, isActive: true }).select('-password');
       
-      if (user) {
-        // Asignar el usuario al request
-        req.user = user as IUser;
+      if (!user) {
+        res.status(401).json({ message: 'No autorizado, usuario desactivado' });
+        return;
       }
 
+      // Asignar el usuario al request
+      req.user = user as IUser;
       next();
     } catch (error) {
       res.status(401).json({ message: 'No autorizado, token fallido' });

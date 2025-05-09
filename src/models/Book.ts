@@ -8,6 +8,7 @@ export interface IBook extends Document {
   publishedYear: number;
   genre: string;
   quantity: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,10 @@ const bookSchema: Schema = new Schema(
       required: [true, 'Por favor ingrese una cantidad'],
       default: 1,
       min: [0, 'La cantidad no puede ser negativa'],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {
