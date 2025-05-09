@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 // @ts-ignore
 const jwt = require('jsonwebtoken');
-import User, { IUser } from '../models/User';
+import { UserModel, IUser } from '../models/user.model';
 
 // Extendiendo la interfaz Request para incluir el usuario
 declare global {
@@ -29,7 +29,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
 
       // Obtener usuario del token y verificar que esté activo
-      const user = await User.findOne({ _id: decoded.id, isActive: true }).select('-password');
+      const user = await UserModel.findOne({ _id: decoded.id, isActive: true }).select('-password');
       
       if (!user) {
         res.status(401).json({ message: 'No autorizado, usuario desactivado' });

@@ -1,7 +1,7 @@
 // Definición de tipos globales
-import { IUser } from '../models/User';
-import { IBook } from '../models/Book';
-import { ILoan } from '../models/Loan';
+import { IUser } from '../models/user.model';
+import { IBook } from '../models/book.model';
+import { ILoan } from '../models/loan.model';
 
 // Para extender tipos de Express
 declare global {
@@ -18,9 +18,8 @@ export interface ErrorResponse {
   stack?: string;
 }
 
-// Los tipos Book, User y Loan se importan directamente desde los modelos, 
-// pero mantenemos estos para casos específicos donde no necesitamos todas
-// las propiedades de los documentos de Mongoose
+// Re-exportamos las interfaces para que sean accesibles desde este módulo
+export { IUser, IBook, ILoan };
 
 // DTO para libros (Data Transfer Object)
 export interface BookDTO {

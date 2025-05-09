@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import * as bcrypt from 'bcryptjs';
-import User from '../models/User';
-import Book from '../models/Book';
-import Loan from '../models/Loan';
+import { UserModel } from '../models/user.model';
+import { BookModel } from '../models/book.model';
+import { LoanModel } from '../models/loan.model';
 import connectDB from '../config/db';
 
 // Cargar variables de entorno
@@ -106,16 +106,16 @@ const books = [
 const importData = async (): Promise<void> => {
   try {
     // Limpiar la base de datos
-    await User.deleteMany({});
-    await Book.deleteMany({});
-    await Loan.deleteMany({});
+    await UserModel.deleteMany({});
+    await BookModel.deleteMany({});
+    await LoanModel.deleteMany({});
 
     // Insertar usuarios
-    const createdUsers = await User.insertMany(users);
+    const createdUsers = await UserModel.insertMany(users);
     const adminUser = createdUsers[0]._id;
 
     // Insertar libros
-    const createdBooks = await Book.insertMany(books);
+    const createdBooks = await BookModel.insertMany(books);
     const firstBook = createdBooks[0]._id;
     const secondBook = createdBooks[1]._id;
     const inactiveBook = createdBooks[5]._id;
@@ -143,7 +143,7 @@ const importData = async (): Promise<void> => {
       },
     ];
 
-    await Loan.insertMany(loans);
+    await LoanModel.insertMany(loans);
 
     console.log('Datos importados correctamente');
     process.exit();
@@ -157,9 +157,9 @@ const importData = async (): Promise<void> => {
 const destroyData = async (): Promise<void> => {
   try {
     // Limpiar la base de datos
-    await User.deleteMany({});
-    await Book.deleteMany({});
-    await Loan.deleteMany({});
+    await UserModel.deleteMany({});
+    await BookModel.deleteMany({});
+    await LoanModel.deleteMany({});
 
     console.log('Datos eliminados correctamente');
     process.exit();

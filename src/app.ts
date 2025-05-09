@@ -5,9 +5,10 @@ import dotenv from 'dotenv';
 import connectDB from './config/db';
 
 // Importar rutas
-import authRoutes from './routes/authRoutes';
-import bookRoutes from './routes/bookRoutes';
-import loanRoutes from './routes/loanRoutes';
+import authRoutes from './routes/auth.route';
+import bookRoutes from './routes/book.route';
+import userRoutes from './routes/user.route';
+import loanRoutes from './routes/loan.route';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(morgan('dev'));
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/loans', loanRoutes);
 
 // Ruta de inicio

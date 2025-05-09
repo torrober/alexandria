@@ -56,6 +56,6 @@ const bookSchema: Schema = new Schema(
   }
 );
 
-const Book = mongoose.model<IBook>('Book', bookSchema);
+const BookModel = mongoose.model<IBook>('Book', bookSchema);
 
-export default Book; 
+export { BookModel, bookSchema }; 

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getBooks, getBookById, createBook, updateBook, deleteBook } from '../controllers/bookController';
+import { getBooks, getBookById, createBook, updateBook, deleteBook } from '../controllers/book.controller';
 import { protect, admin } from '../middleware/auth';
 
 const router = express.Router();

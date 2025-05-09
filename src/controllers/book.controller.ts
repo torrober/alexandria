@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
-import Book, { IBook } from '../models/Book';
+import { readBooksAction, readBookByIdAction } from '../actions/read.book.action';
+import createBookAction from '../actions/create.book.action';
+import updateBookAction from '../actions/update.book.action';
+import deleteBookAction from '../actions/delete.book.action';
 
 // @desc    Obtener todos los libros
 // @route   GET /api/books
 // @access  Public
 export const getBooks = async (req: Request, res: Response): Promise<void> => {
   try {
-    const books = await Book.find({ isActive: true });
+    const books = await readBooksAction();
     res.json(books);
   } catch (error) {
     res.status(500).json({
@@ -21,7 +24,7 @@ export const getBooks = async (req: Request, res: Response): Promise<void> => {
 // @access  Public
 export const getBookById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const book = await Book.findOne({ _id: req.params.id, isActive: true });
+    const book = await readBookByIdAction(req.params.id);
     
     if (book) {
       res.json(book);
@@ -42,17 +45,8 @@ export const getBookById = async (req: Request, res: Response): Promise<void> =>
 export const createBook = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, author, isbn, publishedYear, genre, quantity } = req.body;
-
-    // Verificar si el libro ya existe por ISBN
-    const bookExists = await Book.findOne({ isbn });
-
-    if (bookExists) {
-      res.status(400).json({ message: 'El libro con ese ISBN ya existe' });
-      return;
-    }
-
-    // Crear nuevo libro
-    const book = await Book.create({
+    
+    const book = await createBookAction({
       title,
       author,
       isbn,
@@ -64,7 +58,7 @@ export const createBook = async (req: Request, res: Response): Promise<void> => 
     if (book) {
       res.status(201).json(book);
     } else {
-      res.status(400).json({ message: 'Datos de libro inválidos' });
+      res.status(400).json({ message: 'El libro con ese ISBN ya existe' });
     }
   } catch (error) {
     res.status(500).json({
@@ -81,17 +75,16 @@ export const updateBook = async (req: Request, res: Response): Promise<void> => 
   try {
     const { title, author, isbn, publishedYear, genre, quantity } = req.body;
 
-    const book = await Book.findOne({ _id: req.params.id, isActive: true });
+    const updatedBook = await updateBookAction(req.params.id, {
+      title,
+      author,
+      isbn,
+      publishedYear,
+      genre,
+      quantity,
+    });
 
-    if (book) {
-      book.title = title || book.title;
-      book.author = author || book.author;
-      book.isbn = isbn || book.isbn;
-      book.publishedYear = publishedYear || book.publishedYear;
-      book.genre = genre || book.genre;
-      book.quantity = quantity !== undefined ? quantity : book.quantity;
-
-      const updatedBook = await book.save();
+    if (updatedBook) {
       res.json(updatedBook);
     } else {
       res.status(404).json({ message: 'Libro no encontrado' });
@@ -109,12 +102,9 @@ export const updateBook = async (req: Request, res: Response): Promise<void> => 
 // @access  Private/Admin
 export const deleteBook = async (req: Request, res: Response): Promise<void> => {
   try {
-    const book = await Book.findOne({ _id: req.params.id, isActive: true });
+    const success = await deleteBookAction(req.params.id);
 
-    if (book) {
-      // Realizar soft delete
-      book.isActive = false;
-      await book.save();
+    if (success) {
       res.json({ message: 'Libro desactivado' });
     } else {
       res.status(404).json({ message: 'Libro no encontrado' });

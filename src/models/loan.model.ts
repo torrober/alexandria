@@ -40,6 +40,6 @@ const loanSchema: Schema = new Schema(
   }
 );
 
-const Loan = mongoose.model<ILoan>('Loan', loanSchema);
+const LoanModel = mongoose.model<ILoan>('Loan', loanSchema);
 
-export default Loan; 
+export { LoanModel, loanSchema }; 
